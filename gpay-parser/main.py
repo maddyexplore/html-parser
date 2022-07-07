@@ -7,14 +7,18 @@ input = 'input'
 output = 'output'
 
 def get_fields(strng):
-    search = re.search('(?P<type>Received|Sent|Paid|Requested)\s*(?P<amount>(₹|rs)[\d*\,\.]+\s?)\s?((to|from)\s?)?(?P<name>.*)?\s?using\s?Bank\sAccount\s(?P<bank_acnt>.*)?', strng, re.IGNORECASE)
+    strng = strng.replace('using Bank Account','')
+    search = re.search('(?P<type>Received|Sent|Paid|Requested)\s*(?P<amount>(₹|rs)[\d*\,\.]+\s?)\s?((to|from)\s(?P<name>.*)?)?(?P<bank_acnt>X{11}\d{4})?', strng, re.IGNORECASE)
     if search:
         payment_type = search.group('type')
         amount = search.group('amount')
         name = search.group('name') if search.group('name')!=None else ''
         bank_acnt = search.group('bank_acnt') if search.group('bank_acnt')!=None else ''
+        # print(payment_type.strip(), amount.strip(), name.strip(), bank_acnt.strip())
         return(payment_type.strip(), amount.strip(), name.strip(), bank_acnt.strip())
-    else:None
+    else:
+        # print(strng)
+        None
 
 def parse(html):
     soup = BeautifulSoup(html, 'html.parser')
@@ -35,12 +39,10 @@ def main():
             html = open(os.path.join(input, file), 'r').read()
             res = parse(html)
             filename = file.replace('.html','.csv')
-                
             # writing to csv file 
             fields = ['Date', 'Type', 'Amount', 'To/From', 'Account']
             with open(os.path.join(output, filename), 'w') as csvfile: 
                 csvwriter = csv.writer(csvfile)                 
                 csvwriter.writerow(fields)
                 csvwriter.writerows(res)
-
 main()
