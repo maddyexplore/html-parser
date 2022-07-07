@@ -8,14 +8,19 @@ output = 'output'
 
 def get_fields(strng):
     strng = strng.replace('using Bank Account','')
-    search = re.search('(?P<type>Received|Sent|Paid|Requested)\s*(?P<amount>(₹|rs)[\d*\,\.]+\s?)\s?((to|from)\s(?P<name>.*)?)?(?P<bank_acnt>X{11}\d{4})?', strng, re.IGNORECASE)
+    temp = 'using Bank Account'
+    bank_acnt = ''
+    if temp in strng:
+        strng = strng[:strng.find(temp)]
+    else:
+        act_search = re.search('X{5,15}\d{2,6}',strng)
+        if act_search:strng=strng.replace(act_search.group(),'')
+    search = re.search('(?P<type>Received|Sent|Paid|Requested)\s*(?P<amount>(₹|rs)[\d*\,\.]+\s?)\s?((to|from)\s(?P<name>.*)?)?\s?', strng, re.IGNORECASE)
     if search:
         payment_type = search.group('type')
         amount = search.group('amount')
         name = search.group('name') if search.group('name')!=None else ''
-        bank_acnt = search.group('bank_acnt') if search.group('bank_acnt')!=None else ''
-        # print(payment_type.strip(), amount.strip(), name.strip(), bank_acnt.strip())
-        return(payment_type.strip(), amount.strip(), name.strip(), bank_acnt.strip())
+        return(payment_type.strip(), amount.strip(), name.strip())
     else:
         # print(strng)
         None
@@ -40,7 +45,7 @@ def main():
             res = parse(html)
             filename = file.replace('.html','.csv')
             # writing to csv file 
-            fields = ['Date', 'Type', 'Amount', 'To/From', 'Account']
+            fields = ['Date', 'Type', 'Amount', 'To/From']
             with open(os.path.join(output, filename), 'w') as csvfile: 
                 csvwriter = csv.writer(csvfile)                 
                 csvwriter.writerow(fields)
